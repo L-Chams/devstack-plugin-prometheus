@@ -1,0 +1,26 @@
+# lib/watcher
+# Functions to control the installation and configuration of the watcher services
+
+pre_install_prometheus() {
+    # Install OS packages if necessary with "install_package ...".
+}
+
+install_prometheus() {
+    # Install the service.
+}
+
+configure_prometheus() {
+    # Configure the service.
+}
+
+init_prometheus() {
+    # Initialize and start the service.
+}
+
+shutdown_prometheus() {
+    # Shut the service down.
+}
+
+cleanup_prometheus() {
+    # Cleanup the service.
+}
