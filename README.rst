@@ -4,7 +4,8 @@ Devstack Prometheus Plugin
 Overview
 --------
 
-Devstack plugin to configure prometheus, node-exporter, pushgateway and alertmanager.
+Devstack plugin to configure prometheus, node-exporter, pushgateway
+and alertmanager.
 
 Usage
 -----
