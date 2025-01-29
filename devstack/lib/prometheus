@@ -1,26 +1,107 @@
-# lib/watcher
-# Functions to control the installation and configuration of the watcher services
+# lib/prometheus
+# Functions to control the installation and configuration of prometheus
 
-pre_install_prometheus() {
-    # Install OS packages if necessary with "install_package ...".
+# Save trace setting
+_XTRACE_PROMETHEUS=$(set +o | grep xtrace)
+set +o xtrace
+
+PROMETHEUS_SYSTEMD_SERVICE="devstack@prometheus.service"
+PROMETHEUS_DATA_DIRECTORY="/var/lib/prometheus"
+PROMETHEUS_PORT=${PROMETHEUS_PORT:-9090}
+
+function pre_install_prometheus {
+    # Install OS packages
+    install_package wget tar
 }
 
-install_prometheus() {
-    # Install the service.
+function install_prometheus {
+    # Download Prometheus
+    wget https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+
+    # Extract the tarball
+    tar -xvf prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+
+    # Move binaries to /usr/local/bin
+    sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/prometheus /usr/local/bin/
+    sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool /usr/local/bin/
+
+    # Set ownership
+    sudo chown $(whoami):$(whoami) /usr/local/bin/prometheus
+    sudo chown $(whoami):$(whoami) /usr/local/bin/promtool
 }
 
-configure_prometheus() {
-    # Configure the service.
+function configure_prometheus {
+    # Configure prometheus
+    sudo mkdir /etc/prometheus
+    sudo chown $(whoami):$(whoami) /etc/prometheus
+
+    # Copy User's prometheus config
+    sudo cp ${PROMETHEUS_CONFIG_FILE} /etc/prometheus
+
+    # Change the permission of prometheus config
+    sudo chmod 0644 /etc/prometheus/$(basename ${PROMETHEUS_CONFIG_FILE})
+
+    # Show User's prometheus config
+    sudo cat /etc/prometheus/$(basename ${PROMETHEUS_CONFIG_FILE})
+
+    # Create data directory
+    sudo mkdir ${PROMETHEUS_DATA_DIRECTORY}
+    sudo chown $(whoami):$(whoami) ${PROMETHEUS_DATA_DIRECTORY}
 }
 
-init_prometheus() {
-    # Initialize and start the service.
+function init_prometheus {
+    prometheus_command="/usr/local/bin/prometheus"
+    prometheus_command+=" --config.file=/etc/prometheus/prometheus.yml"
+    prometheus_command+=" --storage.tsdb.path=${PROMETHEUS_DATA_DIRECTORY}"
+    prometheus_command+=" --web.enable-admin-api"
+    prometheus_command+=" --web.enable-remote-write-receiver"
+
+    write_user_unit_file $PROMETHEUS_SYSTEMD_SERVICE "$prometheus_command" "" "$STACK_USER"
+
+    enable_service $PROMETHEUS_SYSTEMD_SERVICE
 }
 
-shutdown_prometheus() {
-    # Shut the service down.
+function start_prometheus {
+    start_service $PROMETHEUS_SYSTEMD_SERVICE
 }
 
-cleanup_prometheus() {
-    # Cleanup the service.
+function stop_prometheus {
+    stop_service $PROMETHEUS_SYSTEMD_SERVICE
 }
+
+function cleanup_prometheus {
+
+    stop_prometheus
+
+    disable_service $PROMETHEUS_SYSTEMD_SERVICE
+
+    # Remove systemd unit files
+    local unitfile="$SYSTEMD_DIR/$PROMETHEUS_SYSTEMD_SERVICE"
+    sudo rm -f $unitfile
+    $SYSTEMCTL daemon-reload
+
+    # Remove Prometheus directories
+    sudo rm -rf /etc/prometheus
+    sudo rm -rf ${PROMETHEUS_DATA_DIRECTORY}
+
+    # Remove binaries
+    sudo rm /usr/local/bin/prometheus
+    sudo rm /usr/local/bin/promtool
+}
+
+function wait_for_data {
+    # Adding sleep time so that data is scrapped by prometheus
+    sleep 60
+}
+
+function check_data {
+    if curl -s --head  --request  GET "http://$HOST_IP:$PROMETHEUS_PORT/metrics" | grep "200 OK" > /dev/null; then
+        echo "#### Metrics data ####"
+        curl "http://$HOST_IP:$PROMETHEUS_PORT/metrics"
+    else
+        die $LINENO "Couldn't get data from prometheus"
+    fi
+}
+
+# Restore xtrace
+$_XTRACE_PROMETHEUS

@@ -1,10 +1,17 @@
 # check for service enabled
-if is_service_enabled prometheus; then
-    if [[ "$1" == "source" ]]; then
-        # Initial source of lib script
-        source $(dirname "$0")/lib/prometheus
-    fi
 
+# Save trace setting
+_XTRACE_PROMETHEUS_PLUGIN=$(set +o | grep xtrace)
+set -o xtrace
+
+echo_summary "devstack-plugin-prometheus's plugin.sh was called..."
+. $DEST/devstack-plugin-prometheus/devstack/lib/prometheus
+
+# Show all of defined environment variables
+(set -o posix; set)
+
+## Prometheus
+if is_service_enabled prometheus; then
     if [[ "$1" == "stack" && "$2" == "pre-install" ]]; then
         # Set up system services
         echo_summary "Configuring system services prometheus"
@@ -20,22 +27,29 @@ if is_service_enabled prometheus; then
         echo_summary "Configuring prometheus"
         configure_prometheus
 
-    elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
+    elif [[ "$1" == "stack" && "$2" == "test-config" ]]; then
         # Initialize and start the prometheus service
         echo_summary "Initializing prometheus"
         init_prometheus
+        echo_summary "Starting prometheus service"
+        start_prometheus
+        echo_summary "Give time to prometheus to scrape data"
+        wait_for_data
+        check_data
     fi
 
     if [[ "$1" == "unstack" ]]; then
         # Shut down prometheus services
         # no-op
-        shutdown_prometheus
+        echo_summary "Stoping prometheus service"
+        stop_prometheus
     fi
 
     if [[ "$1" == "clean" ]]; then
         # Remove state and transient data
         # Remember clean.sh first calls unstack.sh
         # no-op
+        echo_summary "Cleaning prometheus service"
         cleanup_prometheus
     fi
 fi
