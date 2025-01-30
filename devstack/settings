@@ -1,9 +1,13 @@
 # DevStack settings
-define_plugin prometheus
+define_plugin prometheus node_exporter
 enable_service prometheus
+enable_service node_exporter
 
 ## Variables related to prometheus
 PROMETHEUS_VERSION=3.1.0
 PROMETHEUS_PROJECT_DIR=$DEST/devstack-plugin-prometheus
 PROMETHEUS_DEVSTACK_DIR=${PROMETHEUS_PROJECT_DIR}/devstack/files
 PROMETHEUS_CONFIG_FILE=${PROMETHEUS_CONFIG_FILE:-${PROMETHEUS_DEVSTACK_DIR}/prometheus.yml}
+
+## Variables related to node exporter
+NODE_EXPORTER_VERSION=1.8.2
