@@ -2,6 +2,7 @@
     check:
       jobs:
         - openstack-tox-linters
+        - watcher-prometheus-integration
     gate:
       jobs:
         - openstack-tox-linters
