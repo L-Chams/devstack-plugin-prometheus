@@ -68,7 +68,7 @@ function wait_for_data {
     # Adding sleep time so that metrics is pushed by node exporter
     sleep 60
 }
-function check_data {
+function check_data_node_exporter {
     if curl -s --head  --request  GET "http://$HOST_IP:$NODE_EXPORTER_PORT/metrics" | grep "200 OK" > /dev/null; then
         echo "#### Metrics data ####"
         curl "http://$HOST_IP:$NODE_EXPORTER_PORT/metrics"

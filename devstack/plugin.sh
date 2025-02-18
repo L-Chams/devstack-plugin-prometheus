@@ -36,7 +36,7 @@ if is_service_enabled prometheus; then
         start_prometheus
         echo_summary "Give time to prometheus to scrape data"
         wait_for_data
-        check_data
+        check_data_prometheus
     fi
 
     if [[ "$1" == "unstack" ]]; then
@@ -80,7 +80,7 @@ if is_service_enabled node_exporter; then
         start_node_exporter
         echo_summary "Give time to node_exporter to push metrics"
         wait_for_data
-        check_data
+        check_data_node_exporter
     fi
 
     if [[ "$1" == "unstack" ]]; then
