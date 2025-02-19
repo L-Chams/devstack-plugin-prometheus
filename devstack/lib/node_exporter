@@ -38,6 +38,13 @@ function init_node_exporter {
     node_exporter_cmd+=" --no-collector.timex --no-collector.uname --no-collector.stat --no-collector.hwmon"
     node_exporter_cmd+=" --no-collector.os --no-collector.selinux --no-collector.textfile --no-collector.powersupplyclass"
     node_exporter_cmd+=" --no-collector.pressure --no-collector.rapl"
+    if [[ $NODE_EXPORTER_COLLECTOR_EXCLUDE != "" ]]; then
+        collector_list=$(echo $NODE_EXPORTER_COLLECTOR_EXCLUDE | tr "," "\n")
+        for COLLECTOR in ${collector_list[@]}
+        do
+            node_exporter_cmd+=" --no-collector.${COLLECTOR}"
+        done
+    fi
 
     write_user_unit_file $NODE_EXPORTER_SYSTEMD_SERVICE "$node_exporter_cmd" "" "$STACK_USER"
 
