@@ -11,7 +11,7 @@ PROMETHEUS_PORT=${PROMETHEUS_PORT:-9090}
 
 function pre_install_prometheus {
     # Install OS packages
-    install_package wget tar
+    install_package wget tar jq
 }
 
 function install_prometheus {
@@ -94,10 +94,12 @@ function wait_for_data {
     sleep 60
 }
 
-function check_data {
-    if curl -s --head  --request  GET "http://$HOST_IP:$PROMETHEUS_PORT/metrics" | grep "200 OK" > /dev/null; then
-        echo "#### Metrics data ####"
-        curl "http://$HOST_IP:$PROMETHEUS_PORT/metrics"
+function check_data_prometheus {
+    local url="http://$HOST_IP:$PROMETHEUS_PORT/api/v1/label/__name__/values"
+
+    if curl -s --head  --request  GET "$url" | grep "200 OK" > /dev/null; then
+        echo "#### List of metrics names ####"
+        curl -s "$url" | jq -r '.data[]'
     else
         die $LINENO "Couldn't get data from prometheus"
     fi
