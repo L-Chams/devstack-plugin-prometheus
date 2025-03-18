@@ -1,0 +1,82 @@
+# lib/podman_exporter
+# Functions to control the installation and configuration of podman_exporter
+
+# Save trace setting
+_XTRACE_PODMAN_EXPORTER=$(set +o | grep xtrace)
+set +o xtrace
+
+PODMAN_EXPORTER_BINARY="/usr/local/bin/prometheus-podman-exporter"
+PODMAN_EXPORTER_SYSTEMD_SERVICE="devstack@podman-exporter.service"
+PODMAN_EXPORTER_PORT=${PODMAN_EXPORTER_PORT:-9882}
+PE_REPO=${PE_REPO:-https://github.com/containers/prometheus-podman-exporter.git}
+PE_REPO_NAME=${PE_REPO_NAME:-prometheus-podman-exporter}
+
+function pre_install_podman_exporter {
+    # Install OS packages
+    install_package libgpgme-dev libassuan-dev libbtrfs-dev libdevmapper-dev pkg-config build-essential golang podman uidmap netavark
+}
+
+function install_podman_exporter {
+
+    # Clone prometheus-podman-exporter
+    PE_DIR=$DEST/$PE_REPO_NAME
+    git_timed clone $PE_REPO $PE_DIR
+
+    # Generate Binary
+    cd $PE_DIR
+    make binary
+
+    # Move binaries to /usr/local/bin
+    sudo mv $PE_DIR/bin/prometheus-podman-exporter /usr/local/bin/
+
+    # Set ownership
+    sudo chown $(whoami):$(whoami) ${NODE_EXPORTER_BINARY}
+}
+
+function init_podman_exporter {
+
+    podman_exporter_cmd=${PODMAN_EXPORTER_BINARY}
+    podman_exporter_cmd+=" --collector.enable-all"
+
+    write_user_unit_file $PODMAN_EXPORTER_SYSTEMD_SERVICE "$podman_exporter_cmd" "" "$STACK_USER"
+
+    enable_service $PODMAN_EXPORTER_SYSTEMD_SERVICE
+}
+
+function start_podman_exporter {
+    start_service $PODMAN_EXPORTER_SYSTEMD_SERVICE
+}
+
+function stop_podman_exporter {
+    stop_service $PODMAN_EXPORTER_SYSTEMD_SERVICE
+}
+
+function cleanup_podman_exporter {
+    stop_podman_exporter
+    disable_service $PODMAN_EXPORTER_SYSTEMD_SERVICE
+
+    # Remove systemd unit files
+    local unitfile="$SYSTEMD_DIR/$PODMAN_EXPORTER_SYSTEMD_SERVICE"
+    sudo rm -f $unitfile
+    $SYSTEMCTL daemon-reload
+
+    # Remove Node Exporter binaries
+    sudo rm -rf $PODMAN_EXPORTER_BINARY
+}
+
+function wait_for_podman_data {
+    # Adding sleep time so that metrics is pushed by podman exporter
+    sleep 60
+}
+
+function check_data_podman_exporter {
+    if curl -s --head  --request  GET "http://$HOST_IP:$PODMAN_EXPORTER_PORT/metrics" | grep "200 OK" > /dev/null; then
+        echo "#### Metrics data ####"
+        curl "http://$HOST_IP:$PODMAN_EXPORTER_PORT/metrics"
+    else
+        die $LINENO "Couldn't get data from podman_exporter"
+    fi
+}
+
+# Restore xtrace
+$_XTRACE_PODMAN_EXPORTER

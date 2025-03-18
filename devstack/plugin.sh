@@ -7,6 +7,7 @@ set -o xtrace
 echo_summary "devstack-plugin-prometheus's plugin.sh was called..."
 . $DEST/devstack-plugin-prometheus/devstack/lib/prometheus
 . $DEST/devstack-plugin-prometheus/devstack/lib/node_exporter
+. $DEST/devstack-plugin-prometheus/devstack/lib/podman_exporter
 
 # Show all of defined environment variables
 (set -o posix; set)
@@ -96,5 +97,50 @@ if is_service_enabled node_exporter; then
         # no-op
         echo_summary "Cleaning node exporter service"
         cleanup_node_exporter
+    fi
+fi
+
+## Podman Exporter
+if is_service_enabled podman_exporter; then
+    if [[ "$1" == "source" ]]; then
+        # Initial source of lib script
+        source $(dirname "$0")/lib/podman_exporter
+    fi
+
+    if [[ "$1" == "stack" && "$2" == "pre-install" ]]; then
+        # Set up system services
+        echo_summary "Configuring system services podman exporter"
+        pre_install_podman_exporter
+
+    elif [[ "$1" == "stack" && "$2" == "install" ]]; then
+        # Perform installation of service source
+        echo_summary "Installing podman exporter"
+        install_podman_exporter
+
+    elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
+        # Configure after the other layer 1 and 2 services have been configured
+        echo_summary "Configuring podman_exporter"
+        init_podman_exporter
+        echo_summary "Starting podman exporter service"
+        start_podman_exporter
+        echo_summary "Give time to podman_exporter to push metrics"
+        wait_for_podman_data
+        check_data_podman_exporter
+    fi
+
+    if [[ "$1" == "unstack" ]]; then
+        # Shut down podman exporter services
+        # no-op
+        echo_summary "Stoping podman_exporter service"
+        stop_podman_exporter
+
+    fi
+
+    if [[ "$1" == "clean" ]]; then
+        # Remove state and transient data
+        # Remember clean.sh first calls unstack.sh
+        # no-op
+        echo_summary "Cleaning podman exporter service"
+        cleanup_podman_exporter
     fi
 fi

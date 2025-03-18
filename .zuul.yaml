@@ -26,6 +26,7 @@
       devstack_services:
         prometheus: true
         node_exporter: true
+        podman_exporter: true
       zuul_copy_output:
         /etc/prometheus/prometheus.yml: logs
 

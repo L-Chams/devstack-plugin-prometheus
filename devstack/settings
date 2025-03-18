@@ -1,5 +1,5 @@
 # DevStack settings
-define_plugin prometheus node_exporter
+define_plugin prometheus node_exporter podman_exporter
 enable_service prometheus
 enable_service node_exporter
 
