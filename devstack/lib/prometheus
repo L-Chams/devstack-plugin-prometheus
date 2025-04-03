@@ -37,7 +37,8 @@ function install_prometheus {
 
 function configure_prometheus {
     # Configure prometheus
-    sudo mkdir /etc/prometheus
+
+    sudo mkdir -p /etc/prometheus
     sudo chown $(whoami):$(whoami) /etc/prometheus
 
     # Copy User's prometheus config
@@ -50,7 +51,7 @@ function configure_prometheus {
     sudo cat /etc/prometheus/$(basename ${PROMETHEUS_CONFIG_FILE})
 
     # Create data directory
-    sudo mkdir ${PROMETHEUS_DATA_DIRECTORY}
+    sudo mkdir -p ${PROMETHEUS_DATA_DIRECTORY}
     sudo chown $(whoami):$(whoami) ${PROMETHEUS_DATA_DIRECTORY}
 }
 
