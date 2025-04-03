@@ -15,14 +15,19 @@ function pre_install_node_exporter {
 }
 
 function install_node_exporter {
+
+    local ne_tarball=node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
+    local ne_url=https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/${ne_tarball}
+
     # Download node_exporter
-    wget https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
+    local ne_dest
+    ne_dest=`get_extra_file ${ne_url}`
 
     # Extract the tarball
-    tar -xvf node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
+    tar xzf ${ne_dest} -C $DEST
 
     # Move binaries to /usr/local/bin
-    sudo mv node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64/node_exporter /usr/local/bin/
+    sudo mv $DEST/node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64/node_exporter /usr/local/bin/
 
     # Set ownership
     sudo chown $(whoami):$(whoami) ${NODE_EXPORTER_BINARY}
@@ -69,6 +74,9 @@ function cleanup_node_exporter {
 
     # Remove Node Exporter binaries
     sudo rm -rf $NODE_EXPORTER_BINARY
+
+    # Remove untar location
+    sudo rm -rf $DEST/node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64
 }
 
 function wait_for_data {

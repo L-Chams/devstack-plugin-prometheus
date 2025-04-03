@@ -15,15 +15,20 @@ function pre_install_prometheus {
 }
 
 function install_prometheus {
+
+    local prom_tarball=prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+    local prom_url=https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/${prom_tarball}
+
     # Download Prometheus
-    wget https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+    local prom_dest
+    prom_dest=`get_extra_file ${prom_url}`
 
     # Extract the tarball
-    tar -xvf prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+    tar xzf ${prom_dest} -C $DEST
 
     # Move binaries to /usr/local/bin
-    sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/prometheus /usr/local/bin/
-    sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool /usr/local/bin/
+    sudo mv $DEST/prometheus-${PROMETHEUS_VERSION}.linux-amd64/prometheus /usr/local/bin/
+    sudo mv $DEST/prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool /usr/local/bin/
 
     # Set ownership
     sudo chown $(whoami):$(whoami) /usr/local/bin/prometheus
@@ -87,6 +92,9 @@ function cleanup_prometheus {
     # Remove binaries
     sudo rm /usr/local/bin/prometheus
     sudo rm /usr/local/bin/promtool
+
+    # Remove untar location
+    sudo rm -rf $DEST/prometheus-${PROMETHEUS_VERSION}.linux-amd64
 }
 
 function wait_for_data {

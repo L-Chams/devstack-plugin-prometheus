@@ -45,6 +45,8 @@ if is_service_enabled prometheus; then
         # no-op
         echo_summary "Stoping prometheus service"
         stop_prometheus
+        echo_summary "Cleaning prometheus service"
+        cleanup_prometheus
     fi
 
     if [[ "$1" == "clean" ]]; then
@@ -89,6 +91,8 @@ if is_service_enabled node_exporter; then
         # no-op
         echo_summary "Stoping node_exporter service"
         stop_node_exporter
+        echo_summary "Cleaning node exporter service"
+        cleanup_node_exporter
     fi
 
     if [[ "$1" == "clean" ]]; then
