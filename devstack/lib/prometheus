@@ -41,8 +41,15 @@ function configure_prometheus {
     sudo mkdir -p /etc/prometheus
     sudo chown $(whoami):$(whoami) /etc/prometheus
 
-    # Copy User's prometheus config
-    sudo cp ${PROMETHEUS_CONFIG_FILE} /etc/prometheus
+    if [[ ${PROMETHEUS_CUSTOM_SCRAPE_TARGETS} != "" ]]; then
+
+        #  Generate custom config
+        generate_custom_prometheus_config
+    else
+
+        # Copy User's prometheus config
+        sudo cp ${PROMETHEUS_CONFIG_FILE} /etc/prometheus
+    fi
 
     # Change the permission of prometheus config
     sudo chmod 0644 /etc/prometheus/$(basename ${PROMETHEUS_CONFIG_FILE})
@@ -53,6 +60,36 @@ function configure_prometheus {
     # Create data directory
     sudo mkdir -p ${PROMETHEUS_DATA_DIRECTORY}
     sudo chown $(whoami):$(whoami) ${PROMETHEUS_DATA_DIRECTORY}
+}
+
+function generate_custom_prometheus_config {
+    # Generate custome prometheus config
+
+    # local base config
+    local BASE_CONFIG_FILE=${PROMETHEUS_DEVSTACK_DIR}/custom_prometheus.yml
+
+    # Temprory place to hold config file
+    local RESULT_CONFIG_FILE=${PROMETHEUS_DEVSTACK_DIR}/tmp_prometheus.yml
+
+    cat ${BASE_CONFIG_FILE} > ${RESULT_CONFIG_FILE}
+
+    # Generate custom config
+    if [[ ${PROMETHEUS_CUSTOM_SCRAPE_TARGETS} != "" ]]; then
+        echo "  - job_name: 'custom'" >> ${RESULT_CONFIG_FILE}
+        echo "    static_configs:" >> ${RESULT_CONFIG_FILE}
+            TARGETS=$(echo ${PROMETHEUS_CUSTOM_SCRAPE_TARGETS} | tr "," "\n")
+            for TARGET in ${TARGETS[@]}
+            do
+            echo "      - targets: [$TARGET]" >> $RESULT_CONFIG_FILE
+            done
+    fi
+
+    # Copy custom generated
+    sudo cp ${RESULT_CONFIG_FILE} /etc/prometheus/prometheus.yml
+
+    # Drop tmp_prometheus.yml
+    rm ${PROMETHEUS_DEVSTACK_DIR}/tmp_prometheus.yml
+
 }
 
 function init_prometheus {

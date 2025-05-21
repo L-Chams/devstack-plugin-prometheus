@@ -4,6 +4,7 @@
         - openstack-tox-linters
         - watcher-prometheus-integration
         - devstack-prometheus
+        - devstack-prometheus-custom-target
     gate:
       jobs:
         - openstack-tox-linters
@@ -40,3 +41,17 @@
       devstack_localrc:
         # Avoid collecting cpu resources.
         NODE_EXPORTER_COLLECTOR_EXCLUDE: "cpu"
+
+- job:
+    name: devstack-prometheus-custom-target
+    parent: devstack-prometheus-base
+    description: |
+      A Devstack job to install/configure prometheus and node exporter
+      on a single node and generate custom prometheus config.
+    vars:
+      devstack_services:
+        prometheus: true
+        node_exporter: true
+      devstack_localrc:
+        # custom target
+        PROMETHEUS_CUSTOM_SCRAPE_TARGETS: "localhost:9090,localhost:9100"
