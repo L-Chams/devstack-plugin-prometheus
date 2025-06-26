@@ -17,3 +17,8 @@ PROMETHEUS_CUSTOM_SCRAPE_TARGETS=${PROMETHEUS_CUSTOM_SCRAPE_TARGETS:-""}
 NODE_EXPORTER_VERSION=1.8.2
 # List of "," excluded collector names
 NODE_EXPORTER_COLLECTOR_EXCLUDE=${NODE_EXPORTER_COLLECTOR_EXCLUDE:-""}
+
+## Variables related to the observabilityclient
+GITREPO["python-observabilityclient"]=${OBSERVABILITYCLIENT_REPO:-${GIT_BASE}/openstack/python-observabilityclient.git}
+GITBRANCH["python-observabilityclient"]=${OBSERVABILITYCLIENT_BRANCH:-$TARGET_BRANCH}
+GITDIR["python-observabilityclient"]=$DEST/python-observabilityclient

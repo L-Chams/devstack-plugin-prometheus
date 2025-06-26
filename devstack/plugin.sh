@@ -8,6 +8,7 @@ echo_summary "devstack-plugin-prometheus's plugin.sh was called..."
 . $DEST/devstack-plugin-prometheus/devstack/lib/prometheus
 . $DEST/devstack-plugin-prometheus/devstack/lib/node_exporter
 . $DEST/devstack-plugin-prometheus/devstack/lib/podman_exporter
+. $DEST/devstack-plugin-prometheus/devstack/lib/observabilityclient
 
 # Show all of defined environment variables
 (set -o posix; set)
@@ -23,6 +24,8 @@ if is_service_enabled prometheus; then
         # Perform installation of service source
         echo_summary "Installing prometheus"
         install_prometheus
+        echo_summary "Installing python-observabilityclient"
+        install_observabilityclient
 
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         # Configure after the other layer 1 and 2 services have been configured
