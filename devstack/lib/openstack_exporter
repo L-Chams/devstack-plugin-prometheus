@@ -16,21 +16,24 @@ function pre_install_openstack_exporter {
 
 function install_openstack_exporter {
 
-    local oe_tarball=openstack-exporter_${OPENSTACK_EXPORTER_VERSION}_linux_amd64.tar.gz
-    local oe_url=https://github.com/openstack-exporter/openstack-exporter/releases/download/v${OPENSTACK_EXPORTER_VERSION}/${oe_tarball}
-
     # Download openstack_exporter
-    local oe_dest
-    oe_dest=`get_extra_file ${oe_url}`
 
-    # Extract the tarball
-    tar xzf ${oe_dest} -C $DEST
+    cd $DEST
+    git clone https://github.com/openstack-exporter/openstack-exporter.git
+
+    wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
+    sudo rm -rf /usr/local/go
+    sudo tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
+    export PATH=$PATH:/usr/local/go/bin
+
+    cd openstack-exporter
+    go build -o ./openstack-exporter .
 
     # Move binaries to /usr/local/bin
-    sudo mv $DEST/openstack-exporter ${OPENSTACK_EXPORTER_BINARY}
-
+    sudo mv openstack-exporter ${OPENSTACK_EXPORTER_BINARY}
     # Set ownership
     sudo chown $(whoami):$(whoami) ${OPENSTACK_EXPORTER_BINARY}
+    cd -
 }
 
 function init_openstack_exporter {
@@ -65,7 +68,9 @@ function cleanup_openstack_exporter {
     sudo rm -rf $OPENSTACK_EXPORTER_BINARY
 
     # Remove untar location
-    sudo rm -rf $DEST/openstack-exporter
+    sudo rm -rf $DEST/openstack_exporter
+
+    sudo rm -rf $DEST/go1.25.0.linux-amd64.tar.gz
 }
 
 function wait_for_data {
